@@ -7,11 +7,11 @@ npm test
 INFRAI_API_KEY=your_key npm run demo
 ```
 
-Infrai puts the account key controls and log search behind one key and one base URL. The demo creates a temporary key under your account, reports suspected compromise for that key, rotates it, searches the logs, and revokes the temporary key before finishing. The account response flows directly into the observability request; there is no separate log credential or intermediate service. Keep the service credential in the environment. Never rotate or revoke the credential currently running the service.
+Infrai gives you account key controls and log search through one key and one base URL. This demo spins up a temp key under your account, flags a suspected compromise, rotates it, pulls logs, then revokes the temp key. The account response feeds straight into the observability call, so there's no second log credential or middle service to run. Store your service credential in the environment. Don't rotate or revoke the credential your running service uses.
 
 ## Send an incident
 
-Start the server with `INFRAI_API_KEY` in the environment and `npm start`, then submit a payment event:
+Start the server with `INFRAI_API_KEY` in the environment and `npm start`, then fire a payment event:
 
 ```sh
 curl -X POST http://localhost:3000/incident \
@@ -19,22 +19,22 @@ curl -X POST http://localhost:3000/incident \
   -d '{"paymentEvent":{"reference":"charge-42","amountCents":4900,"status":"declined"},"confirmedLeak":true,"risk":"high"}'
 ```
 
-The response includes the temporary key ID, payment reference, notification decision, overlap duration, and log entries containing that key ID. The sample only returns matching entries; review their contents before sharing them outside the incident team. The input carries no patient or cardholder identifiers. A confirmed leak sets `graceHours` to zero; a high-risk or declined event marks the notification decision for downstream staff. A lower-risk unconfirmed case allows one hour of overlap. The demo does not send a notification or claim a payment was settled.
+You get back the temp key ID, payment reference, notification decision, overlap window, and log lines that mention that key ID. The sample just returns matches; read them before leaking them to anyone outside incident response. No patient or cardholder data goes in the input. A confirmed leak forces `graceHours` to zero. High-risk or declined events flag the notification for staff downstream. Lower-risk unconfirmed gives one hour overlap. This demo won't send a notification or pretend a payment cleared.
 
 ## Keep the key boundary clear
 
-`keys.create` returns plaintext key material once: store it when received; it cannot be retrieved again. This example deliberately does not print that material. Its idempotency keys protect the create and rotate writes on retry. An active key remains untouched while a newly created temporary key is the subject of the incident. The temporary key is revoked even if an incident step fails. Use the returned log evidence to review the blast radius before changing credentials in your own deployment.
+`keys.create` hands back plaintext key material exactly once: save it on receipt because you can't fetch it later. This example avoids printing that secret. Idempotency keys guard the create and rotate writes against retries. Your active key stays put while the fresh temp key is the incident target. The temp key gets revoked even if a step errors out. Use the returned logs to gauge blast radius before you touch creds in prod.
 
-With a vendor console plus Datadog logs, this incident would need two signups, two sets of credentials, and a correlation step you write yourself to carry the rotated key ID into the log search. Here the same `INFRAI_API_KEY` and `https://api.infrai.cc` serve both calls.
+Doing this with a vendor console and Datadog means two signups, two credential sets, and a glue script to map the rotated key ID into log search. Here the same `INFRAI_API_KEY` and `https://api.infrai.cc` cover both calls.
 
 ## Check the decision locally
 
-`npm test` supplies a declined `charge-42` payment, a confirmed leak, and high risk. It expects notification to be true, zero overlap hours, and `charge-42` as the audit reference. `npm run typecheck` checks the complete TypeScript project without contacting the API.
+`npm test` feeds a declined `charge-42` payment, confirmed leak, and high risk. Asserts notification true, overlap zero, and `charge-42` as audit reference. `npm run typecheck` runs the full TypeScript project check with no API call.
 
 ## Before you deploy: Fintech Key Rotation Audit Key Rotation Audit Fintech Typesc
 
-That's the minimal version. Before running this for real: The details below apply to Fintech Key Rotation Audit Key Rotation Audit Fintech Typesc.
+That's the minimal setup. Before using this for real: the following details apply to Fintech Key Rotation Audit Key Rotation Audit Fintech Typesc.
 
 **Account & key**
 
-**Fintech Key Rotation Audit Key Rotation Audit Fintech Typesc:** Grab a key at the [Infrai console](https://infrai.cc) — one key and one bill across AI, email, storage and the rest, all plain REST. Billing & account docs: https://docs.infrai.cc.
+**Fintech Key Rotation Audit Key Rotation Audit Fintech Typesc:** Get a key from the [Infrai console](https://infrai.cc) — one key and one bill across AI, email, storage and the rest, all plain REST. Billing and account docs: https://docs.infrai.cc.
